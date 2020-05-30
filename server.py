@@ -10,15 +10,16 @@ def show_room_list(rooms):
         print("MASTER: no room created")
         return
     print("--[Room list]--")
-    for room in rooms:
-        print(room.name)
+    for room_name in rooms:
+        print(room_name)
         print("\n")
 
 
 def shut_down_server(server_socket, clients):
-    for client in clients:
+    for clientAddr in clients:
         en_msg = "exit".encode()
-        client["entity"].send(en_msg)
+        client = clients[clientAddr]["entity"]
+        client.send(en_msg)
     server_socket.close()
     print("Chat server has been shut down")
     sys.exit(0)
@@ -33,13 +34,14 @@ def kill_room(msg, rooms):
 
     del rooms[room_name]
 
+
 def show_clients(clients):
     if not clients:
         print("MASTER: no clients connected")
         return
     print("--[Client list]--")
-    for client in clients:
-        print(client)
+    for clientAddr in clients:
+        print(clientAddr)
         print("\n")
 
 
@@ -69,8 +71,8 @@ except:
 
 print("The Server has been opened")
 
-rooms = []
-clients = []
+rooms = {}
+clients = {}
 
 server_socket.listen(10)
 
@@ -94,7 +96,7 @@ while True:
         client, clientAddr = server_socket.accept()
         print("New Client has been Connected", clientAddr)
         rlist.append(client)
-        clients.append({"entity": client, "state": 0})
+        clients[clientAddr] = {"entity": client, "state": 0}
 
     else:
         msg = r.recv(1024)
