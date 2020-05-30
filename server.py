@@ -33,6 +33,15 @@ def kill_room(msg, rooms):
 
     del rooms[room_name]
 
+def show_clients(clients):
+    if not clients:
+        print("MASTER: no clients connected")
+        return
+    print("--[Client list]--")
+    for client in clients:
+        print(client)
+        print("\n")
+
 
 def operate_server_command(msg, rooms, server_socket, clients):
     if msg == '/ls\n':
@@ -41,6 +50,8 @@ def operate_server_command(msg, rooms, server_socket, clients):
         shut_down_server(server_socket, clients)
     elif msg == re.search("\/kill ([\w]+)\n", msg):
         kill_room(msg, rooms)
+    elif msg == '/show clients\n':
+        show_clients(clients)
     else:
         print("Invalid Input!!")
 
