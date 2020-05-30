@@ -18,7 +18,7 @@ def show_room_list(rooms):
 def shut_down_server(server_socket, clients):
     for client in clients:
         en_msg = "exit".encode()
-        client.send(en_msg)
+        client["entity"].send(en_msg)
     server_socket.close()
     print("Chat server has been shut down")
     sys.exit(0)
@@ -83,7 +83,7 @@ while True:
         client, clientAddr = server_socket.accept()
         print("New Client has been Connected", clientAddr)
         rlist.append(client)
-        clients.append(client)
+        clients.append({"entity": client, "state": 0})
 
     else:
         msg = r.recv(1024)
