@@ -19,7 +19,7 @@ def get_room_list(rooms):
     for room_name in rooms:
         room_detail = rooms[room_name]
         room_list += '\r\n'+ room_name
-        room_list += '\r\n -creator: ' + room_detail["creator"]
+        room_list += '\r\n -creator: ' + room_detail["creator_name"]
         room_list += '\r\n -n of members: ' + len(room_detail["members"])
     return room_list
 
@@ -90,6 +90,7 @@ def create_room(msg, rooms, client, client_details):
 
     room = {
         "creator": client,
+        "creator_name": user_name,
         "members": [client]
     }
     rooms[room_name] = room
