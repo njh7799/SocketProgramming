@@ -35,8 +35,8 @@ try:
     client_socket.connect(addr)
 
 except:
-    traceback.print_exc()
-    print("An error occurred while opening the server.")
+    print("There is no server to connect to.")
+    sys.exit(0)
 
 rlist = [client_socket, sys.stdin]
 

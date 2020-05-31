@@ -12,13 +12,13 @@ def close_server(server_socket):
     sys.exit(0)
 
 
-def show_room_list(rooms):
+def get_room_list(rooms):
     if not rooms:
-        print("MASTER: no room created")
-        return
-    print("--[Room list]--")
+        return "MASTER: no room created"
+    room_list = "--[Room list]--\r\n"
     for room_name in rooms:
-        print(room_name)
+        room_list += room_name+'\r\n'
+    return room_list
 
 
 def propagate_client_details_for_server_end(client_details):
@@ -79,7 +79,7 @@ def create_room(msg, rooms, client, client_details):
         send_message(client, "MASTER: same room name already exists!!!")
         return
     if client_details[client]["state"] == "chat":
-        send_message(client, "MASTER: you are already in the room!!!")
+        send_message(client, "Cannot create: client is already in a chat room")
         return
 
     if not user_name:
@@ -105,11 +105,11 @@ def join_room(msg, rooms, client, client_details):
         send_message(client, "MASTER: no room named "+room_name+"!!!")
         return
     if client_details[client]["state"] == "chat":
-        send_message(client, "MASTER: you are already in the room!!!")
+        send_message(client, "Cannot join: client is already in a chat room")
         return
     room = rooms[room_name]
     if user_name and does_user_name_exists(user_name, room, client_details):
-        send_message(client, "MASTER: redundant user name! try different one")
+        send_message(client, "Cannot join: Nickname already exists")
         return
     if not user_name:
         user_name = "Unknown"
@@ -166,7 +166,7 @@ def whisper(msg, rooms, client, client_detail):
     room = rooms[room_name]
     target_client = find_client_with_user(user_name, room, client_details)
     if not target_client:
-        send_message(client, "MASTER: There is no user named "+user_name+"!!")
+        send_message(client, "MASTER: There is no user named "+user_name+" in this room!!")
         return
     send_message(target_client, "(whisper from) "+client_detail["user_name"] + ": " + chat_msg)
 
@@ -181,7 +181,7 @@ def propagate_chat_message(msg, rooms, client, client_detail):
 
 def operate_server_command(msg, rooms, server_socket, client_details):
     if msg == '/ls':
-        show_room_list(rooms)
+        print(get_room_list(rooms))
     elif msg == '/exit':
         end_chat_service(server_socket, client_details)
     elif re.search("\/kill ([\w]+)", msg):
@@ -189,12 +189,14 @@ def operate_server_command(msg, rooms, server_socket, client_details):
     elif msg == '/show clients':
         show_client_details(client_details)
     else:
-        print("Invalid Input!!")
+        print("Inappropriate Command!!")
 
 
 def handle_client_message(msg, rooms, client, client_details):
     client_detail = client_details[client]
-    if re.search("\/join ([\w]+)( ([\w]+))?", msg):
+    if msg == '/ls':
+        send_message(client, get_room_list(rooms))
+    elif re.search("\/join ([\w]+)( ([\w]+))?", msg):
         join_room(msg, rooms, client, client_details)
     elif re.search("\/create ([\w]+)( ([\w]+))?", msg):
         create_room(msg, rooms, client, client_details)
@@ -203,7 +205,7 @@ def handle_client_message(msg, rooms, client, client_details):
     elif msg == "/exit":
         run_exit(rooms, client, client_details)
     elif re.search("^\/", msg):
-        send_message("MASTER: Invalid operation!")
+        send_message(client, "Inappropriate Command!!")
     else:
         propagate_chat_message(msg, rooms, client, client_detail)
 
