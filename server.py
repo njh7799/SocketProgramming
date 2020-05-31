@@ -33,10 +33,10 @@ def end_chat_service(server_socket, client_details):
 
 def kill_room(msg, rooms, client_details):
     room_name = re.findall("\/kill ([\w]+)", msg)[0]
-    target_room = rooms[room_name]
-    for member in target_room["members"]:
-        send_message(member, "kill")
-        client_details[client] = {
+    room = rooms[room_name]
+    for member in room["members"]:
+        send_message(member, "Room has been killed")
+        client_details[member] = {
             "state": "wait",
             "room_name": '',
             "user_name": ''
@@ -86,6 +86,7 @@ def create_room(msg, rooms, client, client_details):
         user_name = "Unknown"
 
     room = {
+        "creator": client,
         "members": [client]
     }
     rooms[room_name] = room
@@ -142,16 +143,38 @@ def run_exit(rooms, client, client_details):
         print("Client", str(client.getpeername()), "has left")
         del client_details[client]
         send_message(client, "exit")
-
-    elif client_detail["state"] == "chat":
-        msg = "Client " + client_detail["user_name"] + " has left the room."
+        return
+    room_name = client_detail["room_name"]
+    room = rooms[room_name]
+    creator = room["creator"]
+    if creator == client:
         send_message(client, "Left the room")
-        propagate_message(msg, rooms, client, client_detail)
+        for member in room["members"]:
+            if member == client:
+                continue
+            send_message(member, "Creator left the room and has been abandoned")
+            client_details[member] = {
+                "state": "wait",
+                "room_name": '',
+                "user_name": ''
+            }
         client_details[client] = {
             "state": "wait",
             "room_name": '',
             "user_name": ''
         }
+        del rooms[room_name]
+        return
+
+
+    msg = "Client " + client_detail["user_name"] + " has left the room."
+    send_message(client, "Left the room")
+    propagate_message(msg, rooms, client, client_detail)
+    client_details[client] = {
+        "state": "wait",
+        "room_name": '',
+        "user_name": ''
+    }
 
 
 def whisper(msg, rooms, client, client_detail):
@@ -166,7 +189,7 @@ def whisper(msg, rooms, client, client_detail):
     room = rooms[room_name]
     target_client = find_client_with_user(user_name, room, client_details)
     if not target_client:
-        send_message(client, "MASTER: There is no user named "+user_name+" in this room!!")
+        send_message(client, "No client with the name "+user_name+" exist in this room")
         return
     send_message(target_client, "(whisper from) "+client_detail["user_name"] + ": " + chat_msg)
 
@@ -226,6 +249,7 @@ print("The Server has been opened")
 rooms = {}  #
 # {
 #     room_name:{
+#         creator: client
 #         members = [
 #           client
 #        ]

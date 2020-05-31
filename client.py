@@ -11,10 +11,6 @@ def close_client(client_socket):
     sys.exit(0)
 
 
-def kill_room():
-    print("Room has been killed")
-
-
 def propagate_server_for_client_end(client_socket):
      send_message(client_socket, "exit")
 
@@ -22,8 +18,6 @@ def propagate_server_for_client_end(client_socket):
 def handle_server_msg(client_socket, msg):
     if msg == 'exit':
         close_client(client_socket)
-    elif msg == 'kill':
-        kill_room()
     else:
         print(msg)
 
