@@ -15,9 +15,9 @@ def close_server(server_socket):
 def get_room_list(rooms):
     if not rooms:
         return "MASTER: no room created"
-    room_list = "--[Room list]--\r\n"
+    room_list = "--[Room list]--"
     for room_name in rooms:
-        room_list += room_name+'\r\n'
+        room_list += '\r\n'+room_name
     return room_list
 
 
