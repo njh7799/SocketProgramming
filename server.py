@@ -32,12 +32,18 @@ def end_chat_service(server_socket, client_details):
     close_server(server_socket)
 
 
-def kill_room(msg, rooms):
+def kill_room(msg, rooms, client_details):
     room_name = re.findall("\/kill ([\w]+)\n", msg)[0]
     target_room = rooms[room_name]
     for member in target_room["members"]:
         send_message(member, "kill")
+        client_details[client] = {
+            "state": "wait",
+            "room_name": '',
+            "user_name": ''
+        }
     del rooms[room_name]
+    print(room_name,"is killed")
 
 
 def show_client_details(client_details):
@@ -115,7 +121,7 @@ def operate_server_command(msg, rooms, server_socket, client_details):
     elif msg == '/exit\n':
         end_chat_service(server_socket, client_details)
     elif re.search("\/kill ([\w]+)\n", msg):
-        kill_room(msg, rooms)
+        kill_room(msg, rooms, client_details)
     elif msg == '/show clients\n':
         show_client_details(client_details)
     else:
