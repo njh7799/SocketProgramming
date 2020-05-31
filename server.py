@@ -104,43 +104,46 @@ def join_room(msg, rooms, client, client_details):
         send_message(client, "MASTER: redundant user name! try different one")
         return
     if not user_name:
-        user_name="Unknown"
-
+        user_name = "Unknown"
+    msg = "Client " + client_details[client]["user_name"] + " joined in the room.\r\n"
+    msg += "name: " + client_details[client]["user_name"] + "\r\n"
+    msg += "addr: " + str(client.getpeername()) + "\r\n"
     client_details[client] = {
         "state": "chat",
         "room_name": room_name,
         "user_name": user_name
     }
+    propagate_message(msg, rooms, client, client_details[client])
     room["members"].append(client)
     send_message(client, "Room "+room_name+" joined")
     return
 
 
-def run_exit(client, client_details):
-    if client_details[client]["state"] == "wait":
-        print("Client", client.getpeername(), "has left")
+def propagate_message(msg, rooms, client, client_detail):
+    room_name = client_detail["room_name"]
+    members = rooms[room_name]["members"]
+    for member in members:
+        if member == client:
+            continue
+        send_message(member, client_detail["user_name"]+":"+msg)
+
+
+def run_exit(rooms, client, client_detail):
+    if client_detail["state"] == "wait":
+        print("Client", str(client.getpeername()), "has left")
         del client_details[client]
         send_message(client, "exit")
 
-    elif client_details[client]["state"] == "chat":
-        client_details[client] = {
+    elif client_detail["state"] == "chat":
+        msg = "Client " + client_detail["user_name"] + " has left the room."
+        send_message(client, "Left the room")
+        propagate_message(msg, rooms, client, client_detail)
+        client_detail = {
             "state": "wait",
             "room_name": '',
             "user_name": ''
         }
 
-
-def propagate_message(msg, rooms, client, client_details):
-    client_detail = client_details[client]
-    if client_detail["state"] == "wait":
-        send_message(client, "MASTER: You must go into the room first!!")
-    elif client_detail["state"] == "chat":
-        room_name = client_detail["room_name"]
-        members = rooms[room_name]["members"]
-        for member in members:
-            if member == client:
-                continue
-            send_message(member, client_detail["user_name"]+":"+msg)
 
 
 def operate_server_command(msg, rooms, server_socket, client_details):
@@ -157,16 +160,19 @@ def operate_server_command(msg, rooms, server_socket, client_details):
 
 
 def handle_client_message(msg, rooms, client, client_details):
+    client_detail = client_details[client]
     if re.search("\/join ([\w]+)( ([\w]+))?", msg):
         join_room(msg, rooms, client, client_details)
     elif re.search("\/create ([\w]+)( ([\w]+))?", msg):
         create_room(msg, rooms, client, client_details)
     elif msg == "/exit":
-        run_exit(client, client_details)
+        run_exit(rooms, client, client_detail)
     elif re.search("^\/", msg):
         send_message("MASTER: Invalid operation!")
-    else:
-        propagate_message(msg, rooms, client, client_details)
+    elif client_detail["state"] == "wait":
+        send_message(client, "MASTER: You must go into the room first!!")
+    elif client_detail["state"] == "chat":
+        propagate_message(msg, rooms, client, client_detail)
 
 
 addr = ('127.0.0.1', 3000)
