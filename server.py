@@ -3,19 +3,7 @@ import select
 import traceback
 import sys
 import re
-
-
-def send_message(client, msg):
-    en_msg = msg.encode()
-    client.send(en_msg)
-
-
-def receive_message(client):
-    msg = client.recv(1024)
-    de_msg = msg.decode()
-    if msg == b'':
-        return ''
-    return de_msg
+from library import receive_message, send_message
 
 
 def close_server(server_socket):

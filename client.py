@@ -2,7 +2,7 @@ import socket
 import select
 import traceback
 import sys
-
+from library import receive_message, send_message
 
 def shut_down_client(client_socket):
     client_socket.close()
@@ -37,15 +37,13 @@ while True:
     for r in R:
         if r==sys.stdin:
             msg = sys.stdin.readline()
-            en_msg = msg.encode()
-            client_socket.send(en_msg)
+            send_message(client_socket, msg)
             print("Message sent")
 
         elif r==client_socket:
-            msg = client_socket.recv(1024)
-            if msg == b'':
+            msg = receive_message(r)
+            if not msg:
                 continue
-            de_msg = msg.decode()
 
-            handle_server_msg(client_socket, de_msg)
-            print("Message arrived:", de_msg)
+            handle_server_msg(client_socket, msg)
+            print("Message arrived:", msg)
