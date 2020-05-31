@@ -48,12 +48,14 @@ def kill_room(msg, rooms, client_details):
 
 def show_client_details(client_details):
     if not client_details:
-        print("MASTER: no client_details connected")
+        print("MASTER: no clients connected")
         return
     print("--[Client list]--")
     for client in client_details:
-        print(client)
-        print('\n')
+        print("address:", client.getpeername())
+        print("state:", client_details[client]["state"])
+        print("room name:", client_details[client]["room_name"])
+        print("user name:", client_details[client]["user_name"])
 
 
 def does_user_name_exists(user_name, room, client_details):
