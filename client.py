@@ -4,15 +4,20 @@ import traceback
 import sys
 from library import receive_message, send_message
 
-def shut_down_client(client_socket):
+
+def close_client(client_socket):
     client_socket.close()
     print("Chat program has been shut down")
     sys.exit(0)
 
 
+def propagate_server_for_client_end(client_socket):
+     send_message(client_socket, "exit")
+
+
 def handle_server_msg(client_socket, msg):
     if msg == 'exit':
-        shut_down_client(client_socket)
+        close_client(client_socket)
 
 addr = ('127.0.0.1', 3000)
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -30,7 +35,7 @@ while True:
     R,W,X = select.select(rlist, [], [], 500)
 
     if not R:
-        shut_down_client(client_socket)
+        close_client(client_socket)
 
     r = R[0]
 
