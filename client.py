@@ -38,6 +38,8 @@ except:
 
 rlist = [client_socket, sys.stdin]
 
+print('>', sep=' ', end='', flush=True)
+
 while True:
     R,W,X = select.select(rlist, [], [], 500)
 
@@ -46,14 +48,15 @@ while True:
 
     r = R[0]
 
-    for r in R:
-        if r==sys.stdin:
-            msg = sys.stdin.readline()
-            send_message(client_socket, msg)
+    if r == sys.stdin:
+        msg = sys.stdin.readline()
+        send_message(client_socket, msg)
 
-        elif r==client_socket:
-            msg = receive_message(r)
-            if not msg:
-                continue
+    elif r == client_socket:
+        msg = receive_message(r)
+        if not msg:
+            continue
 
-            handle_server_msg(client_socket, msg)
+        handle_server_msg(client_socket, msg)
+
+    print('>', sep=' ', end='', flush=True)
