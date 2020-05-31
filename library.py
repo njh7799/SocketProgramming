@@ -5,7 +5,7 @@ def send_message(target, msg):
 
 def receive_message(target):
     msg = target.recv(1024)
-    de_msg = msg.decode()
+    de_msg = msg.decode().strip()
     if msg == b'':
         return ''
     return de_msg

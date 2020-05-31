@@ -51,7 +51,7 @@ while True:
     r = R[0]
 
     if r == sys.stdin:
-        msg = sys.stdin.readline()
+        msg = sys.stdin.readline().strip()
         send_message(client_socket, msg)
 
     elif r == client_socket:

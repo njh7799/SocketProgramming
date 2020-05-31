@@ -19,7 +19,6 @@ def show_room_list(rooms):
     print("--[Room list]--")
     for room_name in rooms:
         print(room_name)
-        print("\n")
 
 
 def propagate_client_details_for_server_end(client_details):
@@ -33,7 +32,7 @@ def end_chat_service(server_socket, client_details):
 
 
 def kill_room(msg, rooms, client_details):
-    room_name = re.findall("\/kill ([\w]+)\n", msg)[0]
+    room_name = re.findall("\/kill ([\w]+)", msg)[0]
     target_room = rooms[room_name]
     for member in target_room["members"]:
         send_message(member, "kill")
@@ -145,24 +144,24 @@ def propagate_message(msg, rooms, client, client_details):
 
 
 def operate_server_command(msg, rooms, server_socket, client_details):
-    if msg == '/ls\n':
+    if msg == '/ls':
         show_room_list(rooms)
-    elif msg == '/exit\n':
+    elif msg == '/exit':
         end_chat_service(server_socket, client_details)
-    elif re.search("\/kill ([\w]+)\n", msg):
+    elif re.search("\/kill ([\w]+)", msg):
         kill_room(msg, rooms, client_details)
-    elif msg == '/show clients\n':
+    elif msg == '/show clients':
         show_client_details(client_details)
     else:
         print("Invalid Input!!")
 
 
 def handle_client_message(msg, rooms, client, client_details):
-    if re.search("\/join ([\w]+)( ([\w]+))?\n", msg):
+    if re.search("\/join ([\w]+)( ([\w]+))?", msg):
         join_room(msg, rooms, client, client_details)
-    elif re.search("\/create ([\w]+)( ([\w]+))?\n", msg):
+    elif re.search("\/create ([\w]+)( ([\w]+))?", msg):
         create_room(msg, rooms, client, client_details)
-    elif msg == "/exit\n":
+    elif msg == "/exit":
         run_exit(client, client_details)
     elif re.search("^\/", msg):
         send_message("MASTER: Invalid operation!")
@@ -216,7 +215,7 @@ while True:
     r = R[0]
 
     if r == sys.stdin:
-        msg = sys.stdin.readline()
+        msg = sys.stdin.readline().strip()
         operate_server_command(msg, rooms, server_socket, client_details)
 
     elif r == server_socket:
