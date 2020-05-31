@@ -5,6 +5,25 @@ import sys
 import re
 
 
+def send_message(client, msg):
+    en_msg = msg.encode()
+    client.send(en_msg)
+
+
+def receive_message(client):
+    msg = client.recv(1024)
+    de_msg = msg.decode()
+    if msg == b'':
+        return ''
+    return de_msg
+
+
+def close_server(server_socket):
+    server_socket.close()
+    print("Close chat server")
+    sys.exit(0)
+
+
 def show_room_list(rooms):
     if not rooms:
         print("MASTER: no room created")
@@ -15,23 +34,22 @@ def show_room_list(rooms):
         print("\n")
 
 
-def shut_down_server(server_socket, clients):
+def propagate_clients_for_server_end(clients):
     for clientAddr in clients:
-        en_msg = "exit".encode()
         client = clients[clientAddr]["entity"]
-        client.send(en_msg)
-    server_socket.close()
-    print("Chat server has been shut down")
-    sys.exit(0)
+        send_message(client, "exit")
+
+
+def end_chat_service(server_socket, clients):
+    propagate_clients_for_server_end(clients)
+    close_server(server_socket)
 
 
 def kill_room(msg, rooms):
     room_name: object = re.findall("\/kill ([\w]+)\n", msg)[0]
     target_room = rooms[room_name]
     for member in target_room["members"]:
-        en_msg = "kill".encode()
-        member.send(en_msg)
-
+        send_message(member, "kill")
     del rooms[room_name]
 
 
@@ -49,7 +67,7 @@ def operate_server_command(msg, rooms, server_socket, clients):
     if msg == '/ls\n':
         show_room_list(rooms)
     elif msg == '/exit\n':
-        shut_down_server(server_socket, clients)
+        end_chat_service(server_socket, clients)
     elif msg == re.search("\/kill ([\w]+)\n", msg):
         kill_room(msg, rooms)
     elif msg == '/show clients\n':
@@ -84,7 +102,7 @@ while True:
     R, W, X = select.select(rlist, [], [], 500)
 
     if not R:
-        shut_down_server(server_socket, clients)
+        end_chat_service(server_socket, clients)
 
     r = R[0]
 
@@ -99,10 +117,9 @@ while True:
         clients[clientAddr] = {"entity": client, "state": 0}
 
     else:
-        msg = r.recv(1024)
-        de_msg = msg.decode()
-        if msg == b'':
+        msg = receive_message(r)
+        if not msg:
             continue
-        print("New msg arrived -- ", de_msg)
+        print("New msg arrived -- ", msg)
 
     print('>', sep=' ', end='', flush=True)
