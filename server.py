@@ -130,6 +130,20 @@ def run_exit(client, client_details):
             "user_name": ''
         }
 
+
+def propagate_message(msg, rooms, client, client_details):
+    client_detail = client_details[client]
+    if client_detail["state"] == "wait":
+        send_message(client, "MASTER: You must go into the room first!!")
+    elif client_detail["state"] == "chat":
+        room_name = client_detail["room_name"]
+        members = rooms[room_name]["members"]
+        for member in members:
+            if member == client:
+                continue
+            send_message(member, client_detail["user_name"]+":"+msg)
+
+
 def operate_server_command(msg, rooms, server_socket, client_details):
     if msg == '/ls\n':
         show_room_list(rooms)
@@ -143,15 +157,17 @@ def operate_server_command(msg, rooms, server_socket, client_details):
         print("Invalid Input!!")
 
 
-def handle_client_message(msg, client):
+def handle_client_message(msg, rooms, client, client_details):
     if re.search("\/join ([\w]+)( ([\w]+))?\n", msg):
         join_room(msg, rooms, client, client_details)
     elif re.search("\/create ([\w]+)( ([\w]+))?\n", msg):
         create_room(msg, rooms, client, client_details)
     elif msg == "/exit\n":
         run_exit(client, client_details)
+    elif re.search("^\/", msg):
+        send_message("MASTER: Invalid operation!")
     else:
-        print("MASTER: Invalid message received:", msg)
+        propagate_message(msg, rooms, client, client_details)
 
 
 addr = ('127.0.0.1', 3000)
@@ -213,6 +229,6 @@ while True:
         msg = receive_message(r)
         if not msg:
             continue
-        handle_client_message(msg, r)
+        handle_client_message(msg, rooms, r, client_details)
 
     print('>', sep=' ', end='', flush=True)

@@ -26,6 +26,8 @@ def handle_server_msg(client_socket, msg):
         kill_room()
     else:
         print(msg)
+
+        
 addr = ('127.0.0.1', 3000)
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
