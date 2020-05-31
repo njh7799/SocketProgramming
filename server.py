@@ -117,6 +117,19 @@ def join_room(msg, rooms, client, client_details):
     return
 
 
+def run_exit(client, client_details):
+    if client_details[client]["state"] == "wait":
+        print("Client", client.getpeername(), "has left")
+        del client_details[client]
+        send_message(client, "exit")
+
+    elif client_details[client]["state"] == "chat":
+        client_details[client] = {
+            "state": "wait",
+            "room_name": '',
+            "user_name": ''
+        }
+
 def operate_server_command(msg, rooms, server_socket, client_details):
     if msg == '/ls\n':
         show_room_list(rooms)
@@ -135,6 +148,8 @@ def handle_client_message(msg, client):
         join_room(msg, rooms, client, client_details)
     elif re.search("\/create ([\w]+)( ([\w]+))?\n", msg):
         create_room(msg, rooms, client, client_details)
+    elif msg == "/exit\n":
+        run_exit(client, client_details)
     else:
         print("MASTER: Invalid message received:", msg)
 

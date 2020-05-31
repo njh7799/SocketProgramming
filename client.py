@@ -7,7 +7,7 @@ from library import receive_message, send_message
 
 def close_client(client_socket):
     client_socket.close()
-    print("Chat program has been shut down")
+    print("Chat program has been closed")
     sys.exit(0)
 
 
