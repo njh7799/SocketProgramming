@@ -105,14 +105,14 @@ def join_room(msg, rooms, client, client_details):
         return
     if not user_name:
         user_name = "Unknown"
-    msg = "Client " + client_details[client]["user_name"] + " joined in the room.\r\n"
-    msg += "name: " + client_details[client]["user_name"] + "\r\n"
-    msg += "addr: " + str(client.getpeername()) + "\r\n"
     client_details[client] = {
         "state": "chat",
         "room_name": room_name,
         "user_name": user_name
     }
+    msg = "Client " + client_details[client]["user_name"] + " joined in the room.\r\n"
+    msg += "name: " + client_details[client]["user_name"] + "\r\n"
+    msg += "addr: " + str(client.getpeername()) + "\r\n"
     propagate_message(msg, rooms, client, client_details[client])
     room["members"].append(client)
     send_message(client, "Room "+room_name+" joined")
@@ -125,7 +125,7 @@ def propagate_message(msg, rooms, client, client_detail):
     for member in members:
         if member == client:
             continue
-        send_message(member, client_detail["user_name"]+":"+msg)
+        send_message(member, msg)
 
 
 def run_exit(rooms, client, client_detail):
@@ -172,7 +172,7 @@ def handle_client_message(msg, rooms, client, client_details):
     elif client_detail["state"] == "wait":
         send_message(client, "MASTER: You must go into the room first!!")
     elif client_detail["state"] == "chat":
-        propagate_message(msg, rooms, client, client_detail)
+        propagate_message(client_detail["user_name"]+":"+msg, rooms, client, client_detail)
 
 
 addr = ('127.0.0.1', 3000)
