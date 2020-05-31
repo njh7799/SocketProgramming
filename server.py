@@ -18,9 +18,9 @@ def get_room_list(rooms):
     room_list = "--[Room list]--"
     for room_name in rooms:
         room_detail = rooms[room_name]
-        room_list += '\r\n'+ room_name
-        room_list += '\r\n -creator: ' + room_detail["creator_name"]
-        room_list += '\r\n -n of members: ' + str(len(room_detail["members"]))
+        room_list += '\r\n' + room_name
+        room_list += '\r\n  creator: ' + room_detail["creator_name"]
+        room_list += '\r\n  n of members: ' + str(len(room_detail["members"]))
     return room_list
 
 
