@@ -17,7 +17,10 @@ def get_room_list(rooms):
         return "MASTER: no room created"
     room_list = "--[Room list]--"
     for room_name in rooms:
-        room_list += '\r\n'+room_name
+        room_detail = rooms[room_name]
+        room_list += '\r\n'+ room_name
+        room_list += '\r\n -creator: ' + room_detail["creator"]
+        room_list += '\r\n -n of members: ' + len(room_detail["members"])
     return room_list
 
 
