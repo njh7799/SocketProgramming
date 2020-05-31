@@ -61,8 +61,16 @@ def does_user_name_exists(user_name, room, client_details):
     members = room["members"]
     for member in members:
         if client_details[member]["user_name"] == user_name:
-            return False
-    return True
+            return True
+    return False
+
+
+def find_client_with_user(user_name, room, client_details):
+    members = room["members"]
+    for member in members:
+        if client_details[member]["user_name"] == user_name:
+            return member
+    return False
 
 
 def create_room(msg, rooms, client, client_details):
@@ -100,7 +108,7 @@ def join_room(msg, rooms, client, client_details):
         send_message(client, "MASTER: you are already in the room!!!")
         return
     room = rooms[room_name]
-    if user_name and not does_user_name_exists(user_name, room, client_details):
+    if user_name and does_user_name_exists(user_name, room, client_details):
         send_message(client, "MASTER: redundant user name! try different one")
         return
     if not user_name:
@@ -146,6 +154,30 @@ def run_exit(rooms, client, client_details):
         }
 
 
+def whisper(msg, rooms, client, client_detail):
+    if client_detail["state"] == "wait":
+        send_message(client, "MASTER: You must go into the room first!!")
+        return
+    (user_name, chat_msg) = re.findall("\/whisper ([\w]+) ([\w| ]+)", msg)[0]
+    if user_name == "Unknown":
+        send_message(client, "MASTER: You can not send message to Unknown users!!")
+        return
+    room_name = client_detail["room_name"]
+    room = rooms[room_name]
+    target_client = find_client_with_user(user_name, room, client_details)
+    if not target_client:
+        send_message(client, "MASTER: There is no user named "+user_name+"!!")
+        return
+    send_message(target_client, "(whisper from) "+client_detail["user_name"] + ": " + chat_msg)
+
+
+def propagate_chat_message(msg, rooms, client, client_detail):
+    if client_detail["state"] == "wait":
+        send_message(client, "MASTER: You must go into the room first!!")
+        return
+
+    propagate_message(client_detail["user_name"]+":"+msg, rooms, client, client_detail)
+
 
 def operate_server_command(msg, rooms, server_socket, client_details):
     if msg == '/ls':
@@ -166,14 +198,14 @@ def handle_client_message(msg, rooms, client, client_details):
         join_room(msg, rooms, client, client_details)
     elif re.search("\/create ([\w]+)( ([\w]+))?", msg):
         create_room(msg, rooms, client, client_details)
+    elif re.search("\/whisper ([\w]+) ([\w| ]+)", msg):
+        whisper(msg, rooms, client, client_detail)
     elif msg == "/exit":
         run_exit(rooms, client, client_details)
     elif re.search("^\/", msg):
         send_message("MASTER: Invalid operation!")
-    elif client_detail["state"] == "wait":
-        send_message(client, "MASTER: You must go into the room first!!")
-    elif client_detail["state"] == "chat":
-        propagate_message(client_detail["user_name"]+":"+msg, rooms, client, client_detail)
+    else:
+        propagate_chat_message(msg, rooms, client, client_detail)
 
 
 addr = ('127.0.0.1', 3000)
