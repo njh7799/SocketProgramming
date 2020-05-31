@@ -167,7 +167,7 @@ def handle_client_message(msg, rooms, client, client_details):
     elif re.search("\/create ([\w]+)( ([\w]+))?", msg):
         create_room(msg, rooms, client, client_details)
     elif msg == "/exit":
-        run_exit(rooms, client, client_detail)
+        run_exit(rooms, client, client_details)
     elif re.search("^\/", msg):
         send_message("MASTER: Invalid operation!")
     elif client_detail["state"] == "wait":
