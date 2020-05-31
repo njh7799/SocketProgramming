@@ -128,7 +128,8 @@ def propagate_message(msg, rooms, client, client_detail):
         send_message(member, msg)
 
 
-def run_exit(rooms, client, client_detail):
+def run_exit(rooms, client, client_details):
+    client_detail = client_details[client]
     if client_detail["state"] == "wait":
         print("Client", str(client.getpeername()), "has left")
         del client_details[client]
@@ -138,7 +139,7 @@ def run_exit(rooms, client, client_detail):
         msg = "Client " + client_detail["user_name"] + " has left the room."
         send_message(client, "Left the room")
         propagate_message(msg, rooms, client, client_detail)
-        client_detail = {
+        client_details[client] = {
             "state": "wait",
             "room_name": '',
             "user_name": ''
