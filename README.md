@@ -4,8 +4,8 @@
 
 ```shell
 📁SocketProgramming
-├── server.py
-├── client.py
+├── Server.py
+├── Client.py
 └── library.py
 ```
 
