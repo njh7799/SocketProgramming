@@ -57,7 +57,7 @@ def kill_room(msg, rooms, client_details):
     print(room_name,"is killed")
 
 
-def show_client_details(client_details):
+def show_clients(client_details):
     if not client_details:
         print("MASTER: no clients connected")
         return
@@ -230,7 +230,7 @@ def operate_server_command(msg, rooms, server_socket, client_details):
     elif re.search("\/kill ([\w]+)", msg):
         kill_room(msg, rooms, client_details)
     elif msg == '/show clients':
-        show_client_details(client_details)
+        show_clients(client_details)
     else:
         print("Inappropriate Command!!")
 
