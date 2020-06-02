@@ -154,7 +154,8 @@ def handle_creator_left_event(room, client):
     return
 
 
-def handle_participant_left_event(rooms, client, client_detail):
+def handle_participant_left_event(room, rooms, client, client_details):
+    client_detail = client_details[client]
     msg = "Client " + client_detail["user_name"] + " has left the room."
     send_message(client, "Left the room")
     propagate_message(msg, rooms, client, client_detail)
@@ -163,6 +164,7 @@ def handle_participant_left_event(rooms, client, client_detail):
         "room_name": '',
         "user_name": ''
     }
+    room["members"] = [member for member in room["members"] if member != client]
 
 
 def handle_client_disconnect_event(client, client_details):
@@ -209,7 +211,7 @@ def run_exit(rooms, client, client_details):
         handle_creator_left_event(room, client)
         return
 
-    handle_participant_left_event(rooms, client, client_detail)
+    handle_participant_left_event(room, rooms, client, client_details)
 
 
 def propagate_chat_message(msg, rooms, client, client_detail):
