@@ -6,6 +6,15 @@ import re
 from library import receive_message, send_message
 
 
+def propagate_message(msg, rooms, client, client_detail):
+    room_name = client_detail["room_name"]
+    members = rooms[room_name]["members"]
+    for member in members:
+        if member == client:
+            continue
+        send_message(member, msg)
+
+
 def close_server(server_socket):
     server_socket.close()
     print("Close chat server")
@@ -68,42 +77,6 @@ def does_user_name_exists(user_name, room, client_details):
     return False
 
 
-def find_client_with_user(user_name, room, client_details):
-    members = room["members"]
-    for member in members:
-        if client_details[member]["user_name"] == user_name:
-            return member
-    return False
-
-
-def create_room(msg, rooms, client, client_details):
-    (room_name, null, user_name) = re.findall("\/create ([\w]+)( ([\w]+))?", msg)[0]
-    if room_name in rooms:
-        send_message(client, "MASTER: same room name already exists!!!")
-        return
-    if client_details[client]["state"] == "chat":
-        send_message(client, "Cannot create: client is already in a chat room")
-        return
-
-    if not user_name:
-        user_name = "Unknown"
-
-    room = {
-        "creator": client,
-        "creator_name": user_name,
-        "members": [client]
-    }
-    rooms[room_name] = room
-    client_details[client] = {
-        "state": "chat",
-        "room_name": room_name,
-        "user_name": user_name
-    }
-    send_message(client, "Room "+room_name+" created")
-    print("New room "+room_name+" created")
-    return
-
-
 def join_room(msg, rooms, client, client_details):
     (room_name,null,user_name) = re.findall("\/join ([\w]+)( ([\w]+))?", msg)[0]
     if room_name not in rooms:
@@ -132,45 +105,56 @@ def join_room(msg, rooms, client, client_details):
     return
 
 
-def propagate_message(msg, rooms, client, client_detail):
-    room_name = client_detail["room_name"]
-    members = rooms[room_name]["members"]
-    for member in members:
+def create_room(msg, rooms, client, client_details):
+    (room_name, null, user_name) = re.findall("\/create ([\w]+)( ([\w]+))?", msg)[0]
+    if room_name in rooms:
+        send_message(client, "MASTER: same room name already exists!!!")
+        return
+    if client_details[client]["state"] == "chat":
+        send_message(client, "Cannot create: client is already in a chat room")
+        return
+
+    if not user_name:
+        user_name = "Unknown"
+
+    room = {
+        "creator": client,
+        "creator_name": user_name,
+        "room_name":room_name,
+        "members": [client]
+    }
+    rooms[room_name] = room
+    client_details[client] = {
+        "state": "chat",
+        "room_name": room_name,
+        "user_name": user_name
+    }
+    send_message(client, "Room "+room_name+" created")
+    print("New room "+room_name+" created")
+    return
+
+
+def handle_creator_left_event(room, client):
+    send_message(client, "Left the room")
+    for member in room["members"]:
         if member == client:
             continue
-        send_message(member, msg)
-
-
-def run_exit(rooms, client, client_details):
-    client_detail = client_details[client]
-    if client_detail["state"] == "wait":
-        print("Client", str(client.getpeername()), "has left")
-        del client_details[client]
-        send_message(client, "exit")
-        return
-    room_name = client_detail["room_name"]
-    room = rooms[room_name]
-    creator = room["creator"]
-    if creator == client:
-        send_message(client, "Left the room")
-        for member in room["members"]:
-            if member == client:
-                continue
-            send_message(member, "Creator left the room and has been abandoned")
-            client_details[member] = {
-                "state": "wait",
-                "room_name": '',
-                "user_name": ''
-            }
-        client_details[client] = {
+        send_message(member, "Creator left the room and has been abandoned")
+        client_details[member] = {
             "state": "wait",
             "room_name": '',
             "user_name": ''
         }
-        del rooms[room_name]
-        return
+    client_details[client] = {
+        "state": "wait",
+        "room_name": '',
+        "user_name": ''
+    }
+    del rooms[room["room_name"]]
+    return
 
 
+def handle_participant_left_event(rooms, client, client_detail):
     msg = "Client " + client_detail["user_name"] + " has left the room."
     send_message(client, "Left the room")
     propagate_message(msg, rooms, client, client_detail)
@@ -179,6 +163,21 @@ def run_exit(rooms, client, client_details):
         "room_name": '',
         "user_name": ''
     }
+
+
+def handle_client_disconnect_event(client, client_details):
+    print("Client", str(client.getpeername()), "has left")
+    del client_details[client]
+    send_message(client, "exit")
+    return
+
+
+def find_client_with_user(user_name, room, client_details):
+    members = room["members"]
+    for member in members:
+        if client_details[member]["user_name"] == user_name:
+            return member
+    return False
 
 
 def whisper(msg, rooms, client, client_detail):
@@ -196,6 +195,21 @@ def whisper(msg, rooms, client, client_detail):
         send_message(client, "No client with the name "+user_name+" exist in this room")
         return
     send_message(target_client, "(whisper from) "+client_detail["user_name"] + ": " + chat_msg)
+
+
+def run_exit(rooms, client, client_details):
+    client_detail = client_details[client]
+    if client_detail["state"] == "wait":
+        handle_client_disconnect_event(client, client_details)
+        return
+    room_name = client_detail["room_name"]
+    room = rooms[room_name]
+    creator = room["creator"]
+    if creator == client:
+        handle_creator_left_event(room, client)
+        return
+
+    handle_participant_left_event(rooms, client, client_detail)
 
 
 def propagate_chat_message(msg, rooms, client, client_detail):
@@ -251,6 +265,7 @@ except:
 print("The Server has been opened")
 
 rooms = {}  #
+# 구조 예시
 # {
 #     room_name:{
 #         creator: client
@@ -260,6 +275,7 @@ rooms = {}  #
 #     }
 # }
 client_details = {}
+# 구조 예시
 # {
 #     <client>:{
 #         "state":"wait",

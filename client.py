@@ -1,6 +1,5 @@
 import socket
 import select
-import traceback
 import sys
 from library import receive_message, send_message
 
