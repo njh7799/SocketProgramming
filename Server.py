@@ -267,9 +267,10 @@ except:
 print("The Server has been opened")
 
 rooms = {}  #
-# 구조 예시
+# example
 # {
 #     room_name:{
+#         room_name: room11
 #         creator: client
 #         members = [
 #           client
@@ -277,7 +278,7 @@ rooms = {}  #
 #     }
 # }
 client_details = {}
-# 구조 예시
+# example
 # {
 #     <client>:{
 #         "state":"wait",
